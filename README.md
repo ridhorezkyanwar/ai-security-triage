@@ -122,7 +122,9 @@ After adding or changing environment variables, trigger a redeploy so the runnin
 ## 10. Current deployment and branch protection
 
 - Canonical production URL: [ai-security-triage.vercel.app](https://ai-security-triage.vercel.app). Use this alias for the latest production deployment; a URL containing a unique deployment hash remains tied to that specific build.
-- The current Vercel build for commit `7f44aa1ae7befd13d80744309dbeb00fd6749e5b` reached `READY`. The build no longer reports the earlier FastAPI static-file collection warning after CSS was copied to `public/static/styles.css`, Vercel's runtime-only static mount was disabled, and Python dependencies were explicitly declared in `pyproject.toml`.
+- The code fix for the old deployment failure is on `main`: CSS is served from `public/static/styles.css`, the runtime-only Starlette static mount is disabled on Vercel, Python dependencies are declared in `pyproject.toml`, and `vercel.json` includes `templates/**` in the function bundle.
+- Live checks on the canonical alias `https://ai-security-triage.vercel.app` returned HTTP 200 for `/health` (including `template_ready: true`) and `/static/styles.css`. The exact hash URL from the earlier report belongs to an older deployment and returns HTTP 500; use the canonical alias so the latest release is served.
+- The root page requires HTTP Basic authentication. The automated Vercel fetch could not complete the Basic Auth browser flow, so a direct authenticated-page smoke test remains unverified.
 - App-level HTTP Basic authentication is enabled. The password is stored as a sensitive Vercel environment variable; never commit or publish it.
 - `GROQ_API_KEY` is configured in Vercel as a sensitive secret for Production and Preview. No live Groq request has been run, so model access and inference success are still unverified.
 - GitHub Actions `pytest` passed for the static asset/dependency fix. This validates automated tests, not an authenticated live browser flow or Groq inference.

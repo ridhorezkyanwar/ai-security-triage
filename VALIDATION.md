@@ -2,7 +2,7 @@
 
 ## Scope
 
-Validation includes local/CI tests and Vercel build metadata. No real Groq API request was sent. The API key value was not printed in this record; its environment variable was migrated to Vercel's sensitive-secret visibility. The current Vercel deployment `dpl_h53oBijAyULGXkFrJsbxXH6Ugb8n` reached `READY` for commit `7f44aa1ae7befd13d80744309dbeb00fd6749e5b`. The latest build no longer reports the previous static-file collection warning. Runtime errors were not reported in the selected one-hour summary. A direct authenticated HTTP smoke test and live Groq inference remain unverified.
+Validation includes GitHub Actions tests and direct fetch checks of Vercel routes. No live Groq inference has been run. The `GROQ_API_KEY` environment variable is configured as a Vercel sensitive secret; its value was not printed. The latest code on `main` includes `vercel.json` with `templates/**`, explicit Python dependencies, and CSS served from `public/static/styles.css`. The canonical URL `https://ai-security-triage.vercel.app/health` returned HTTP 200 with `template_ready: true`; `/static/styles.css` also returned HTTP 200. The older hash-specific URL supplied earlier returned HTTP 500 because it points to a previous deployment. An unauthenticated fetch cannot complete the app's HTTP Basic Auth flow; direct login and homepage render remain to be checked in a browser.
 
 ## Automated checks
 

@@ -100,7 +100,9 @@ Masukkan password dan API key langsung pada dashboard Vercel sebagai secret, buk
 
 - Aplikasi sudah dideploy ke Vercel: https://ai-security-triage.vercel.app
 - Gunakan domain alias di atas untuk versi terbaru. URL dengan hash deployment lama tetap menunjuk ke build lama.
-- Deployment versi terbaru pada commit `7f44aa1ae7befd13d80744309dbeb00fd6749e5b` berstatus READY. Build warning pengumpulan CSS yang muncul sebelumnya sudah tidak muncul setelah aset CSS dipindahkan ke `public/static/styles.css` dan dependensi Python dideklarasikan eksplisit di `pyproject.toml`.
+- Perbaikan deployment di `main` mencakup CSS di `public/static/styles.css`, penghindaran mount `StaticFiles` saat di Vercel, metadata dependensi Python, dan `vercel.json` untuk mengemas `templates/**`.
+- Saya menguji alias produksi `https://ai-security-triage.vercel.app`: `/health` mengembalikan HTTP 200 dengan `template_ready: true`, dan `/static/styles.css` mengembalikan HTTP 200. URL hash yang sebelumnya kamu kirim menunjuk ke deployment lama yang tetap 500; gunakan alias produksi tersebut.
+- Halaman utama diproteksi HTTP Basic Auth. Pengujian otomatis tidak berhasil menyelesaikan alur login browser, sehingga uji login langsung masih belum terkonfirmasi.
 - Akses aplikasi memakai HTTP Basic Auth dengan username `analyst`. Password disimpan sebagai environment variable sensitif di Vercel; jangan commit ke GitHub.
 - `GROQ_API_KEY` sudah dikonfigurasi di Vercel sebagai secret sensitif untuk Production dan Preview. Namun, permintaan Groq live belum diuji, jadi keberhasilan model/API belum terkonfirmasi.
 - GitHub Actions `pytest` lulus untuk perbaikan CSS dan metadata dependensi. Ini tidak membuktikan alur login browser atau inferensi Groq secara live.
