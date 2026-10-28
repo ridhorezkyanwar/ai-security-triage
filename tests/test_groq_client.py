@@ -106,8 +106,18 @@ def test_client_handles_auth_error_without_leaking_key():
     session = FakeSession(post_response=FakeResponse({"error": "invalid key"}, 401))
     with pytest.raises(GroqAPIError) as exc:
         GroqClient(secret, session=session).classify("A long enough report for the auth error test.")
-    assert "authentication failed" in str(exc.value).lower()
+    assert "http 401" in str(exc.value).lower()
+    assert "api key" in str(exc.value).lower()
     assert secret not in str(exc.value)
+
+
+def test_client_distinguishes_permission_error():
+    session = FakeSession(post_response=FakeResponse({"error": "permissions_error"}, 403))
+    with pytest.raises(GroqAPIError) as exc:
+        GroqClient("test-key", session=session).classify("A long enough report for the permission error test.")
+    assert "http 403" in str(exc.value).lower()
+    assert "model permissions" in str(exc.value).lower()
+    assert "test-key" not in str(exc.value)
 
 
 def test_client_reports_rate_limit_clearly():
