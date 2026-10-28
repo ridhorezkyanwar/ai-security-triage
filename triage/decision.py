@@ -26,11 +26,19 @@ def build_triage_result(
         reasons.append("The evidence-quality assessment is insufficient.")
     if evidence_quality == "partial":
         reasons.append("Some technical evidence is missing; confirm details manually.")
-    if category_confidence is None or category_confidence < review_confidence_threshold:
+    if category_confidence is None:
+        reasons.append(
+            "Category confidence was not provided; the configured threshold cannot be evaluated."
+        )
+    elif category_confidence < review_confidence_threshold:
         reasons.append(
             f"Category confidence is below the configured threshold ({review_confidence_threshold:.2f})."
         )
-    if evidence_confidence is None or evidence_confidence < evidence_confidence_threshold:
+    if evidence_confidence is None:
+        reasons.append(
+            "Evidence-quality confidence was not provided; the configured threshold cannot be evaluated."
+        )
+    elif evidence_confidence < evidence_confidence_threshold:
         reasons.append(
             f"Evidence-quality confidence is below the configured threshold ({evidence_confidence_threshold:.2f})."
         )
