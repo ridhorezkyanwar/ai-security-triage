@@ -186,8 +186,16 @@ class GroqClient:
         status = int(getattr(response, "status_code", 0))
         if 200 <= status < 300:
             return
-        if status in (401, 403):
-            message = "Groq authentication failed or the key is not authorized. Check GROQ_API_KEY and account access."
+        if status == 401:
+            message = (
+                "Groq rejected the API key (HTTP 401 Unauthorized). Verify that GROQ_API_KEY was copied "
+                "from the Groq Console, is active, and has not been revoked. Replace it in Vercel if needed."
+            )
+        elif status == 403:
+            message = (
+                "Groq denied access (HTTP 403 Forbidden). Check the selected Groq project/account permissions "
+                "and whether the configured GROQ_MODEL is allowed by model permissions."
+            )
         elif status == 429:
             message = (
                 "Groq rate limit or quota reached (HTTP 429). Check your account's current limits and retry after reset; "
