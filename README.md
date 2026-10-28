@@ -15,7 +15,7 @@ A small, review-first prototype that classifies sanitized vulnerability reports 
 - Offline, keyword-based demo that does not send data to a third party.
 - Fixed category and evidence-quality taxonomies, response validation, safe provider errors, and manual-review routing.
 - Synthetic test dataset and optional opt-in benchmark script.
-- Docker and Render configuration, plus GitHub Actions tests.
+- Docker, Render, and Vercel configuration guidance, plus GitHub Actions tests.
 
 ## 1. Prerequisites
 
@@ -103,9 +103,23 @@ To evaluate all bundled cases, run `python scripts/evaluate.py --live` only when
 
 A `Dockerfile` and `render.yaml` blueprint are included. Hosted templates set `REQUIRE_AUTH=true`; configure a strong, unique `APP_ACCESS_PASSWORD` and store `GROQ_API_KEY` only as a server-side secret. If authentication is required but the password is missing, all non-health routes fail closed with HTTP 503 rather than exposing the Groq-backed endpoint. The Docker image defaults to requiring authentication. Local development remains convenient because `run-windows.bat` and the documented Uvicorn command bind to localhost; `.env.example` sets `REQUIRE_AUTH=false` for that local-only use. Never bake keys into the image or repository. `/health` remains public for hosting health checks and reports whether a Groq key is configured, so do not treat it as a secret-bearing endpoint.
 
-The shared HTTP Basic password is a light single-user gate, not multi-user authentication, and this app does not yet have persistent per-user rate limits. Do not expose a publicly accessible instance with an active API key until access protection and usage controls have been reviewed. Hosting free tiers, sleep behavior, build quotas, and provider terms may change; check the current provider dashboard. This project has **not** been deployed by this ZIP-generation task.
+The shared HTTP Basic password is a light single-user gate, not multi-user authentication, and this app does not yet have persistent per-user rate limits. Do not expose a publicly accessible instance with an active API key until access protection and usage controls have been reviewed. Hosting free tiers, sleep behavior, build quotas, and provider terms may change; check the current provider dashboard.
 
-## 9. Security limitations
+## 9. Deploy to Vercel (Hobby/free plan)
+
+Vercel supports FastAPI with zero-configuration detection of an application exported as `app` from `app.py`. This repository has that entrypoint. Create a Vercel project connected to this GitHub repository and set the following **Production** environment variables before exposing the site:
+
+- `REQUIRE_AUTH=true`
+- `APP_ACCESS_USERNAME=analyst`
+- `APP_ACCESS_PASSWORD` — a strong, unique password stored as a sensitive secret
+- `GROQ_MODEL=openai/gpt-oss-20b`
+- `GROQ_API_KEY` — add only your own valid key in Vercel Project Settings → Environment Variables when available
+
+The app now defaults to locked when `REQUIRE_AUTH` is absent. If auth is required but `APP_ACCESS_PASSWORD` is missing, non-health routes return HTTP 503 instead of becoming public. `/health` remains available for deployment checks. Keep the Vercel deployment on the Hobby plan and review the current usage limits; do not enable paid resources solely for this project. The UI and API need an app-level password because the public demo should not expose a Groq API key or let strangers consume the owner's quota.
+
+After adding or changing environment variables, trigger a redeploy so the running functions receive them. Test `/health`, confirm the root page requires HTTP Basic authentication, then log in and try a synthetic report in Demo mode. Groq mode remains unavailable until a valid `GROQ_API_KEY` is added. Never commit secrets.
+
+## 10. Security limitations
 
 - Only assess systems for which you have permission.
 - Model output can be mistaken or manipulated by prompt injection. Treat report text and model responses as untrusted.

@@ -1,8 +1,15 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from triage.web import app
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def default_local_test_environment(monkeypatch):
+    # Tests opt into local mode unless a specific test checks the hosted secure default.
+    monkeypatch.setenv("REQUIRE_AUTH", "false")
 
 
 def test_health_does_not_expose_api_key(monkeypatch):
@@ -66,6 +73,14 @@ def test_groq_api_error_is_returned_as_safe_502(monkeypatch):
 def test_too_short_report_is_rejected():
     response = client.post("/api/triage", json={"mode": "demo", "report": "tiny"})
     assert response.status_code == 422
+
+
+def test_auth_defaults_to_required_if_environment_is_missing(monkeypatch):
+    monkeypatch.delenv("REQUIRE_AUTH", raising=False)
+    monkeypatch.delenv("APP_ACCESS_PASSWORD", raising=False)
+    response = client.get("/")
+    assert response.status_code == 503
+    assert "locked" in response.text.lower()
 
 
 def test_required_auth_fails_closed_if_password_missing(monkeypatch):

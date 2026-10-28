@@ -12,15 +12,16 @@ Run from the repository root:
 python -m pytest
 ```
 
-The test suite uses mocked HTTP responses to verify request shape, output validation, rate-limit/auth error handling, key secrecy in API responses, offline demo behavior, optional HTTP Basic protection, and fail-closed behavior when hosted authentication is required but its password is missing. The tests do not prove that the current Groq service, account, model access, or deployment will work live.
+The test suite uses mocked HTTP responses to verify request shape, output validation, rate-limit/auth error handling, key secrecy in API responses, offline demo behavior, optional HTTP Basic protection, fail-closed behavior when hosted authentication is required but its password is missing, and the secure-by-default behavior when REQUIRE_AUTH is unset. The tests do not prove that the current Groq service, account, model access, or deployment will work live.
 
 ## Live validation still required by the user
 
-1. Create a Groq API key in the console if available under the user's account plan.
-2. Set `GROQ_API_KEY` in `.env`.
-3. Confirm the configured `GROQ_MODEL` is listed by the account, using `/api/models` or Groq's model documentation.
-4. Run a single synthetic sample in Groq mode.
-5. If live testing succeeds, optionally run a five-case synthetic benchmark and save actual results. Check rate limits before running more.
+1. Confirm Vercel is using the Hobby plan and the intended repository/production branch.
+2. Set `REQUIRE_AUTH=true`, a strong unique `APP_ACCESS_PASSWORD`, and `APP_ACCESS_USERNAME` in the deployment environment.
+3. Create a Groq API key in the console if available under the user's account plan and store it as a deployment secret.
+4. Confirm the configured `GROQ_MODEL` is listed by the account, using `/api/models` or Groq's model documentation.
+5. Run a single synthetic sample in Groq mode.
+6. If live testing succeeds, optionally run a five-case synthetic benchmark and save actual results. Check rate limits before running more.
 
 ## Limitations
 

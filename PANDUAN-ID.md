@@ -82,10 +82,24 @@ GROQ_API_KEY=ISI_DI_SECRET_HOSTING
 
 Jangan commit password atau API key. Blueprint Render dan Dockerfile proyek ini mengaktifkan autentikasi secara default. Jika `REQUIRE_AUTH=true` tetapi password belum diisi, halaman dan API utama akan menolak akses dengan HTTP 503; endpoint `/health` tetap tersedia untuk pemeriksaan hosting. Jangan menonaktifkan autentikasi pada instance yang dapat diakses publik.
 
-## 9. Status teknis
+## 9. Deployment Vercel
+
+Jika Render meminta kartu pembayaran, jangan lanjutkan di Render. Vercel sudah mendukung FastAPI dari entry point `app.py`. Hubungkan repository ini sebagai project Vercel di plan Hobby, lalu masukkan environment variable berikut pada Production:
+
+```dotenv
+REQUIRE_AUTH=true
+APP_ACCESS_USERNAME=analyst
+APP_ACCESS_PASSWORD=PASSWORD_UNIK_YANG_PANJANG
+GROQ_MODEL=openai/gpt-oss-20b
+GROQ_API_KEY=API_KEY_GROQ_MILIKMU
+```
+
+Masukkan password dan API key langsung pada dashboard Vercel sebagai secret, bukan ke file repo. Aplikasi sekarang terkunci secara default bila `REQUIRE_AUTH` tidak diatur; jika password belum terisi, halaman akan mengembalikan HTTP 503. Jangan aktifkan resource berbayar. Setelah mengatur environment variables, redeploy, lalu uji login Basic Auth dan mode demo dengan laporan sintetis.
+
+## 10. Status teknis
 
 - UI dan backend disiapkan untuk Groq.
 - Tes otomatis memakai mock, bukan panggilan API live.
 - Koneksi Groq baru dapat diverifikasi setelah kamu menambahkan API key dan menjalankan permintaan nyata.
-- Konfigurasi Docker dan Render tersedia; Docker dan Render mewajibkan autentikasi pada konfigurasi deployment yang disediakan.
-- Proyek ini belum dideploy ke internet oleh perubahan ini.
+- Konfigurasi Docker dan Render tersedia; proyek juga memiliki panduan deployment Vercel.
+- Koneksi Groq live membutuhkan API key milik pengguna dan tidak termasuk dalam deployment ini.

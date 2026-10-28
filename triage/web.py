@@ -71,7 +71,8 @@ def create_app() -> FastAPI:
         if request.url.path == "/health":
             return await call_next(request)
 
-        require_auth = os.getenv("REQUIRE_AUTH", "false").strip().lower() in {"1", "true", "yes", "on"}
+        # Secure by default on hosted platforms. Local development explicitly opts out via .env.example.
+        require_auth = os.getenv("REQUIRE_AUTH", "true").strip().lower() in {"1", "true", "yes", "on"}
         configured_password = os.getenv("APP_ACCESS_PASSWORD", "").strip()
         if not configured_password:
             if require_auth:
