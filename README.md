@@ -119,7 +119,15 @@ The app now defaults to locked when `REQUIRE_AUTH` is absent. If auth is require
 
 After adding or changing environment variables, trigger a redeploy so the running functions receive them. Test `/health`, confirm the root page requires HTTP Basic authentication, then log in and try a synthetic report in Demo mode. Groq mode remains unavailable until a valid `GROQ_API_KEY` is added. Never commit secrets.
 
-## 10. Security limitations
+## 10. Current deployment and branch protection
+
+- Production URL: [ai-security-triage.vercel.app](https://ai-security-triage.vercel.app). The Vercel deployment reported `READY`; the selected runtime-error summary found no errors in its one-hour window. A full authenticated browser smoke test has not yet been verified.
+- App-level HTTP Basic authentication is enabled. The password is stored as a sensitive Vercel environment variable; never commit or publish it.
+- `GROQ_API_KEY` is not configured yet. After adding a valid key under Vercel Project Settings → Environment Variables, redeploy and test with a synthetic report. Until then, only Demo mode works after login.
+- GitHub Actions `pytest` passed for the secure-default change. This is not proof of live Groq functionality.
+- GitHub branch protection for `main` is **not enabled yet**. Open [Settings → Rules](https://github.com/ridhorezkyanwar/ai-security-triage/settings/rules), add a ruleset targeting `main`, require pull requests and the `pytest` status check, and block force pushes and branch deletion. Verify the ruleset after saving.
+
+## 11. Security limitations
 
 - Only assess systems for which you have permission.
 - Model output can be mistaken or manipulated by prompt injection. Treat report text and model responses as untrusted.
