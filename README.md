@@ -130,6 +130,14 @@ After adding or changing environment variables, trigger a redeploy so the runnin
 - GitHub Actions `pytest` passed for the static asset/dependency fix. This validates automated tests, not an authenticated live browser flow or Groq inference.
 - GitHub branch protection for `main` is **not enabled yet**. The connected GitHub integration can commit source files but does not provide a branch-ruleset write operation; the branch protection endpoint also returned an integration permission error. Open [Settings → Rules](https://github.com/ridhorezkyanwar/ai-security-triage/settings/rules), add a ruleset targeting `main`, require pull requests and the `pytest` status check, and block force pushes and branch deletion. Verify the ruleset after saving.
 
+## Public rules-only demo
+
+- Public demo: https://ai-security-triage.vercel.app/demo
+- It accepts report text only and runs the deterministic rules-based demo path. It does not call Groq or any other external AI provider, and it does not need `GROQ_API_KEY`.
+- The page and `/api/demo` endpoint are intentionally public. The normal `/` UI, `/api/models`, and `/api/triage` remain behind the app's HTTP Basic authentication.
+- The public API rejects extra fields such as a client-supplied `mode`, caps request bodies at 84 KiB, and validates report length. These are basic abuse controls, not a replacement for a persistent, distributed rate limiter.
+- Report text is still sent to this app's hosted server for processing. Use synthetic or redacted text only; never submit credentials, personal data, private source code, or confidential program details.
+
 ## 11. Security limitations
 
 - Only assess systems for which you have permission.

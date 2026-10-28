@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101720">
-  <meta name="description" content="A cautious triage assistant for security reports, with optional Groq API integration.">
-  <title>AI Security Triage Agent</title>
+  <meta name="description" content="{% if public_demo %}Try the rule-based security-report triage demo. No API key or external AI provider is used; use synthetic or redacted text.{% else %}A cautious triage assistant for security reports, with optional Groq API integration.{% endif %}">
+  <title>{% if public_demo %}Public Rules-Only Demo | AI Security Triage Agent{% else %}AI Security Triage Agent{% endif %}</title>
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="/" aria-label="AI Security Triage home">
+    <a class="brand" href="{{ '/demo' if public_demo else '/' }}" aria-label="AI Security Triage home">
       <span class="brand-mark" aria-hidden="true">ST</span>
       <span>SECURITY <strong>TRIAGE</strong></span>
     </a>
@@ -19,12 +19,21 @@
 
   <main class="layout">
     <section class="hero">
+      {% if public_demo %}
+      <p class="eyebrow">PUBLIC DEMO · NO API KEY</p>
+      <h1>Try security-report <span>triage safely.</span></h1>
+      <p class="hero-copy">This public page uses rule-based heuristics on this app's server. It does not call Groq or another external AI provider. The result is a demonstration, not an AI prediction or vulnerability confirmation.</p>
+      <div class="hero-tags">
+        <span>Public demo</span><span>Rule-based only</span><span>No external AI</span><span>Human review</span>
+      </div>
+      {% else %}
       <p class="eyebrow">AI-ASSISTED SECURITY WORKFLOW</p>
       <h1>Turn security reports into <span>structured triage.</span></h1>
       <p class="hero-copy">Classify a report, assess the completeness of its evidence, and route uncertain cases to a human reviewer. This tool does not verify or exploit vulnerabilities.</p>
       <div class="hero-tags">
         <span>Python</span><span>FastAPI</span><span>Groq-hosted AI</span><span>Offline demo</span><span>Human review</span>
       </div>
+      {% endif %}
     </section>
 
     <section class="workspace" aria-labelledby="input-title">
@@ -38,11 +47,18 @@
 
       <div class="field-group">
         <label for="mode">Analysis mode</label>
+        {% if public_demo %}
+        <select id="mode" name="mode" disabled aria-describedby="mode-help">
+          <option value="demo">Public rules-only demo — no AI/API provider</option>
+        </select>
+        <p class="field-help" id="mode-help">This endpoint accepts report text only and always runs rule-based demo classification.</p>
+        {% else %}
         <select id="mode" name="mode">
           <option value="demo">Rule-based demo — offline, not AI</option>
           <option value="groq">Groq cloud AI — requires Groq API key</option>
         </select>
         <p class="field-help" id="mode-help">Demo mode uses local keyword rules. It is not an AI prediction and sends no report to a third party.</p>
+        {% endif %}
       </div>
 
       <div class="field-group">
@@ -55,7 +71,11 @@
 
       <div class="privacy-note">
         <span class="note-icon" aria-hidden="true">!</span>
+        {% if public_demo %}
+        <p><strong>Data handling:</strong> Your report is sent to this app's server for rule-based processing, but this public endpoint does not send it to Groq or another external AI provider. Use synthetic or redacted text only; do not paste credentials, personal data, private source code, or confidential program details.</p>
+        {% else %}
         <p><strong>Data handling:</strong> Groq mode sends report text to Groq's hosted API from the backend. The API key never goes to the browser. Use synthetic or redacted reports only; do not paste credentials, personal data, private source code, or confidential program details. The offline demo does not send reports anywhere.</p>
+        {% endif %}
       </div>
 
       <div class="actions-row">
@@ -142,6 +162,8 @@
   </main>
 
   <script>
+    const publicDemo = {{ 'true' if public_demo else 'false' }};
+    const apiEndpoint = publicDemo ? '/api/demo' : '/api/triage';
     const reportInput = document.getElementById('report');
     const modeInput = document.getElementById('mode');
     const charCount = document.getElementById('char-count');
@@ -158,14 +180,16 @@
       document.getElementById('error-message').hidden = true;
     });
 
-    modeInput.addEventListener('change', () => {
-      const help = document.getElementById('mode-help');
-      const helpText = {
-        demo: 'Demo mode uses local keyword rules. It is not an AI prediction and sends no report to a third party.',
-        groq: 'Groq mode sends the sanitized report to Groq’s hosted API. Add GROQ_API_KEY to the backend .env file. Free-tier availability, model access, and request limits depend on the current Groq account and policy.'
-      };
-      help.textContent = helpText[modeInput.value] || helpText.demo;
-    });
+    if (!publicDemo) {
+      modeInput.addEventListener('change', () => {
+        const help = document.getElementById('mode-help');
+        const helpText = {
+          demo: 'Demo mode uses local keyword rules. It is not an AI prediction and sends no report to a third party.',
+          groq: 'Groq mode sends the sanitized report to Groq’s hosted API. Add GROQ_API_KEY to the backend .env file. Free-tier availability, model access, and request limits depend on the current Groq account and policy.'
+        };
+        help.textContent = helpText[modeInput.value] || helpText.demo;
+      });
+    }
 
     function addText(parent, tag, value, className) {
       const node = document.createElement(tag);
@@ -251,10 +275,13 @@
       button.disabled = true;
       label.textContent = 'Analyzing…';
       try {
-        const response = await fetch('/api/triage', {
+        const payload = publicDemo
+          ? { report: reportInput.value }
+          : { report: reportInput.value, mode: modeInput.value };
+        const response = await fetch(apiEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ report: reportInput.value, mode: modeInput.value })
+          body: JSON.stringify(payload)
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data.detail || `Request failed (${response.status})`);

@@ -130,3 +130,54 @@ def test_optional_basic_auth_protects_ui_when_configured(monkeypatch):
     assert client.get("/health").status_code == 200
     monkeypatch.delenv("APP_ACCESS_PASSWORD", raising=False)
     monkeypatch.delenv("APP_ACCESS_USERNAME", raising=False)
+
+def test_public_demo_page_is_available_while_main_app_requires_auth(monkeypatch):
+    monkeypatch.setenv("REQUIRE_AUTH", "true")
+    monkeypatch.setenv("APP_ACCESS_PASSWORD", "test-password")
+    response = client.get("/demo")
+    assert response.status_code == 200
+    assert "Public Rules-Only Demo" in response.text
+    assert "Public rules-only demo — no AI/API provider" in response.text
+    assert '<option value="groq">' not in response.text
+    assert "fetch(apiEndpoint" in response.text
+    assert "Your report is sent to this app's server" in response.text
+    assert client.get("/").status_code == 401
+    assert client.get("/api/models").status_code == 401
+
+
+def test_public_demo_api_forces_rules_only_mode_without_calling_groq(monkeypatch):
+    monkeypatch.setenv("REQUIRE_AUTH", "true")
+    monkeypatch.setenv("APP_ACCESS_PASSWORD", "test-password")
+    monkeypatch.setenv("GROQ_API_KEY", "must-not-be-used")
+
+    def fail_if_groq_is_called(self, report):
+        raise AssertionError("Public demo must never call Groq.")
+
+    monkeypatch.setattr("triage.groq_client.GroqClient.classify", fail_if_groq_is_called)
+    response = client.post("/api/demo", json={
+        "report": "Synthetic cross-site scripting report. Endpoint: /search. No confirmed proof yet.",
+    })
+    assert response.status_code == 200
+    assert response.json()["mode"] == "demo"
+    assert response.json()["category"] == "xss"
+
+
+def test_public_demo_rejects_mode_override(monkeypatch):
+    monkeypatch.setenv("REQUIRE_AUTH", "true")
+    monkeypatch.setenv("APP_ACCESS_PASSWORD", "test-password")
+    response = client.post("/api/demo", json={
+        "report": "Synthetic report text, sufficiently long for validation.",
+        "mode": "groq",
+    })
+    assert response.status_code == 422
+
+
+def test_public_demo_rejects_oversized_content_length(monkeypatch):
+    monkeypatch.setenv("REQUIRE_AUTH", "true")
+    monkeypatch.setenv("APP_ACCESS_PASSWORD", "test-password")
+    response = client.post(
+        "/api/demo",
+        content=b'{"report":"' + b"a" * (84 * 1024) + b'"}',
+        headers={"content-type": "application/json"},
+    )
+    assert response.status_code == 413

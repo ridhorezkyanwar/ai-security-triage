@@ -10,6 +10,7 @@ from typing import Literal
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
+from pydantic import ConfigDict, ValidationError
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -28,6 +29,16 @@ STATIC_DIR = PROJECT_ROOT / "static"
 class TriageRequest(BaseModel):
     report: str = Field(min_length=20, max_length=20_000)
     mode: Literal["demo", "groq"] = "demo"
+
+
+class PublicDemoRequest(BaseModel):
+    """Payload for the public, rules-only demo. Extra fields are rejected."""
+
+    model_config = ConfigDict(extra="forbid")
+    report: str = Field(min_length=20, max_length=20_000)
+
+
+PUBLIC_DEMO_MAX_REQUEST_BYTES = 84 * 1024
 
 
 class TriageResponse(BaseModel):
@@ -70,7 +81,9 @@ def create_app() -> FastAPI:
     @app.middleware("http")
     async def optional_basic_auth(request: Request, call_next):
         """A lightweight shared-password gate; not a full multi-user account system."""
-        if request.url.path == "/health":
+        # These exact paths are intentionally public. The public demo uses a separate
+        # rules-only endpoint; the normal UI and Groq endpoints stay behind Basic Auth.
+        if request.url.path in {"/health", "/demo", "/api/demo", "/static/styles.css"}:
             return await call_next(request)
 
         # Secure by default on hosted platforms. Local development explicitly opts out via .env.example.
@@ -113,6 +126,20 @@ def create_app() -> FastAPI:
             context={
                 "default_model": os.getenv("GROQ_MODEL", DEFAULT_GROQ_MODEL),
                 "max_report_chars": 20_000,
+                "public_demo": False,
+            },
+        )
+
+    @app.get("/demo", response_class=HTMLResponse, include_in_schema=False)
+    async def public_demo_page(request: Request) -> HTMLResponse:
+        """A public UI that exposes only the rules-based demo mode."""
+        return templates.TemplateResponse(
+            request=request,
+            name="index.html",
+            context={
+                "default_model": "rule-based-demo",
+                "max_report_chars": 20_000,
+                "public_demo": True,
             },
         )
 
@@ -141,6 +168,46 @@ def create_app() -> FastAPI:
             return {"models": result}
         except GroqAPIError as exc:
             raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    @app.post("/api/demo", response_model=TriageResponse)
+    async def public_demo_api(request: Request) -> dict[str, object]:
+        """Public demo API: bounded input and an enforced rules-only execution path."""
+        content_length = request.headers.get("content-length")
+        if content_length is not None:
+            try:
+                request_bytes = int(content_length)
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Invalid Content-Length.") from None
+            if request_bytes < 0:
+                raise HTTPException(status_code=400, detail="Invalid Content-Length.")
+            if request_bytes > PUBLIC_DEMO_MAX_REQUEST_BYTES:
+                raise HTTPException(status_code=413, detail="Demo request is too large.")
+
+        raw_body = bytearray()
+        async for chunk in request.stream():
+            if len(raw_body) + len(chunk) > PUBLIC_DEMO_MAX_REQUEST_BYTES:
+                raise HTTPException(status_code=413, detail="Demo request is too large.")
+            raw_body.extend(chunk)
+
+        try:
+            payload = PublicDemoRequest.model_validate_json(bytes(raw_body))
+        except ValidationError as exc:
+            raise HTTPException(
+                status_code=422,
+                detail=exc.errors(include_url=False),
+            ) from exc
+
+        # Do not read GROQ_API_KEY, the model name, or any client-supplied mode.
+        # This endpoint always uses deterministic rule-based demo classification.
+        try:
+            return run_triage(
+                payload.report,
+                mode="demo",
+                review_confidence_threshold=_read_threshold("REVIEW_CONFIDENCE_THRESHOLD", 0.72),
+                evidence_confidence_threshold=_read_threshold("EVIDENCE_CONFIDENCE_THRESHOLD", 0.65),
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     @app.post("/api/triage", response_model=TriageResponse)
     async def triage(request: TriageRequest) -> dict[str, object]:
