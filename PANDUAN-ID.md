@@ -99,9 +99,10 @@ Masukkan password dan API key langsung pada dashboard Vercel sebagai secret, buk
 ## 10. Status teknis
 
 - Aplikasi sudah dideploy ke Vercel: https://ai-security-triage.vercel.app
-- Deployment Vercel berstatus READY untuk build yang diperiksa. Ringkasan error runtime tidak menemukan error pada jendela satu jam yang diperiksa; ini bukan pengganti pengujian HTTP menyeluruh.
-- Akses aplikasi memakai HTTP Basic Auth dengan username `analyst`. Password disimpan sebagai environment variable sensitif di Vercel dan diberikan melalui percakapan kepada pemilik; jangan masukkan ke GitHub.
-- `GROQ_API_KEY` belum ditambahkan. Mode demo dapat dicoba setelah login, tetapi mode Groq belum aktif.
-- Tes GitHub Actions untuk commit pengamanan berhasil. Tes itu tidak membuktikan koneksi Groq live.
-- Branch protection untuk `main` belum aktif. Buka [GitHub Settings → Rules](https://github.com/ridhorezkyanwar/ai-security-triage/settings/rules), buat ruleset untuk `main`, wajibkan pull request dan status check `pytest`, lalu blokir force push serta penghapusan branch.
+- Gunakan domain alias di atas untuk versi terbaru. URL dengan hash deployment lama tetap menunjuk ke build lama.
+- Deployment versi terbaru pada commit `7f44aa1ae7befd13d80744309dbeb00fd6749e5b` berstatus READY. Build warning pengumpulan CSS yang muncul sebelumnya sudah tidak muncul setelah aset CSS dipindahkan ke `public/static/styles.css` dan dependensi Python dideklarasikan eksplisit di `pyproject.toml`.
+- Akses aplikasi memakai HTTP Basic Auth dengan username `analyst`. Password disimpan sebagai environment variable sensitif di Vercel; jangan commit ke GitHub.
+- `GROQ_API_KEY` sudah dikonfigurasi di Vercel sebagai secret sensitif untuk Production dan Preview. Namun, permintaan Groq live belum diuji, jadi keberhasilan model/API belum terkonfirmasi.
+- GitHub Actions `pytest` lulus untuk perbaikan CSS dan metadata dependensi. Ini tidak membuktikan alur login browser atau inferensi Groq secara live.
+- Branch protection untuk `main` masih belum aktif. Integrasi GitHub di sesi ini tidak menyediakan operasi tulis untuk aturan branch; endpoint proteksi juga ditolak karena izin integrasi. Buka [GitHub Settings → Rules](https://github.com/ridhorezkyanwar/ai-security-triage/settings/rules), buat ruleset untuk `main`, wajibkan pull request dan status check `pytest`, lalu blokir force push serta penghapusan branch.
 - Render meminta informasi pembayaran (HTTP 402); tidak ada kartu atau paket berbayar yang ditambahkan.

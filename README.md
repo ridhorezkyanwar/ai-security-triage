@@ -121,11 +121,12 @@ After adding or changing environment variables, trigger a redeploy so the runnin
 
 ## 10. Current deployment and branch protection
 
-- Production URL: [ai-security-triage.vercel.app](https://ai-security-triage.vercel.app). The Vercel deployment reported `READY`; the selected runtime-error summary found no errors in its one-hour window. A full authenticated browser smoke test has not yet been verified.
+- Canonical production URL: [ai-security-triage.vercel.app](https://ai-security-triage.vercel.app). Use this alias for the latest production deployment; a URL containing a unique deployment hash remains tied to that specific build.
+- The current Vercel build for commit `7f44aa1ae7befd13d80744309dbeb00fd6749e5b` reached `READY`. The build no longer reports the earlier FastAPI static-file collection warning after CSS was copied to `public/static/styles.css`, Vercel's runtime-only static mount was disabled, and Python dependencies were explicitly declared in `pyproject.toml`.
 - App-level HTTP Basic authentication is enabled. The password is stored as a sensitive Vercel environment variable; never commit or publish it.
-- `GROQ_API_KEY` is not configured yet. After adding a valid key under Vercel Project Settings → Environment Variables, redeploy and test with a synthetic report. Until then, only Demo mode works after login.
-- GitHub Actions `pytest` passed for the secure-default change. This is not proof of live Groq functionality.
-- GitHub branch protection for `main` is **not enabled yet**. Open [Settings → Rules](https://github.com/ridhorezkyanwar/ai-security-triage/settings/rules), add a ruleset targeting `main`, require pull requests and the `pytest` status check, and block force pushes and branch deletion. Verify the ruleset after saving.
+- `GROQ_API_KEY` is configured in Vercel as a sensitive secret for Production and Preview. No live Groq request has been run, so model access and inference success are still unverified.
+- GitHub Actions `pytest` passed for the static asset/dependency fix. This validates automated tests, not an authenticated live browser flow or Groq inference.
+- GitHub branch protection for `main` is **not enabled yet**. The connected GitHub integration can commit source files but does not provide a branch-ruleset write operation; the branch protection endpoint also returned an integration permission error. Open [Settings → Rules](https://github.com/ridhorezkyanwar/ai-security-triage/settings/rules), add a ruleset targeting `main`, require pull requests and the `pytest` status check, and block force pushes and branch deletion. Verify the ruleset after saving.
 
 ## 11. Security limitations
 

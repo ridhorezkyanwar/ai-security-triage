@@ -2,7 +2,7 @@
 
 ## Scope
 
-Validation includes local/CI tests and deployment metadata. No real Groq API request was sent, and no Groq key was used. The Vercel project `ai-security-triage` is linked to this repository; deployment `dpl_9ooJHhRx1PQv9CKSu8mDUZNwXVRd` reached `READY` for commit `9b7a76658066fc52bf67425d1d148ae4d0834d40`. The latest runtime-error summary reported no errors in the selected one-hour window. A direct authenticated HTTP smoke test was not completed, and `GROQ_API_KEY` is not configured.
+Validation includes local/CI tests and Vercel build metadata. No real Groq API request was sent. The API key value was not printed in this record; its environment variable was migrated to Vercel's sensitive-secret visibility. The current Vercel deployment `dpl_h53oBijAyULGXkFrJsbxXH6Ugb8n` reached `READY` for commit `7f44aa1ae7befd13d80744309dbeb00fd6749e5b`. The latest build no longer reports the previous static-file collection warning. Runtime errors were not reported in the selected one-hour summary. A direct authenticated HTTP smoke test and live Groq inference remain unverified.
 
 ## Automated checks
 
@@ -16,13 +16,13 @@ The test suite uses mocked HTTP responses to verify request shape, output valida
 
 ## Live validation still required by the user
 
-1. Test `/health` from a browser or HTTP client.
+1. Open the canonical deployment alias `https://ai-security-triage.vercel.app`, not a stale hash-specific deployment URL.
 2. Confirm the root route prompts for HTTP Basic authentication and use the configured app credentials.
-3. Test Demo mode using a synthetic report.
-4. Add your own Groq API key as a sensitive Vercel environment variable only if the account allows the intended free use; redeploy.
-5. Confirm `/api/models` lists the selected model and run one synthetic report in Groq mode.
+3. Test Demo mode using a synthetic report; the CSS file is now published under `public/static/styles.css`.
+4. Confirm `/health` from a browser or HTTP client.
+5. Confirm `/api/models` lists the selected model and run one synthetic report in Groq mode. This is still pending.
 6. Optionally run a five-case synthetic benchmark only after checking rate limits.
-7. Enable GitHub branch protection manually in [Settings → Rules](https://github.com/ridhorezkyanwar/ai-security-triage/settings/rules): require PRs and the `pytest` status check, and block force pushes/deletions.
+7. Enable GitHub branch protection manually in [Settings → Rules](https://github.com/ridhorezkyanwar/ai-security-triage/settings/rules): require PRs and the `pytest` status check, and block force pushes/deletions. The connected GitHub integration cannot write rulesets in this session.
 
 ## Limitations
 
