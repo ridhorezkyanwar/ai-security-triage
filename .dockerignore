@@ -1,0 +1,10 @@
+.env
+.venv
+venv
+.git
+.gitignore
+.pytest_cache
+__pycache__
+*.py[cod]
+reports/benchmark-*.json
+reports/benchmark-*.csv

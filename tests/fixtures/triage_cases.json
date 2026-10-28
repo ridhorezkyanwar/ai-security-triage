@@ -1,0 +1,218 @@
+[
+  {
+    "id": "SYN-001",
+    "report": "Synthetic report: Cross-site scripting in /search. Steps to reproduce: submit a harmless marker in the q parameter. Expected: the value is encoded as text. Observed: the value is rendered as active HTML in the response. Request: GET /search?q=MARKER. Response: redacted sample shows unencoded marker.",
+    "expected_category": "xss",
+    "expected_evidence_quality": "actionable"
+  },
+  {
+    "id": "SYN-002",
+    "report": "A report claims reflected XSS on the search page because the search term appears in the page source. Endpoint: /search?q=example. No reproduction steps or browser execution evidence are provided.",
+    "expected_category": "xss",
+    "expected_evidence_quality": "partial"
+  },
+  {
+    "id": "SYN-003",
+    "report": "Possible XSS somewhere in the website, but the reporter did not provide a URL path, input point, or observed behavior.",
+    "expected_category": "xss",
+    "expected_evidence_quality": "insufficient"
+  },
+  {
+    "id": "SYN-004",
+    "report": "Synthetic XSS report for /profile/display-name. Steps to reproduce: in a local test fixture, set a display name to a harmless HTML marker, then view the profile. Expected: marker is encoded. Observed: browser interprets markup. Expected and observed behavior are documented; all data is synthetic.",
+    "expected_category": "xss",
+    "expected_evidence_quality": "actionable"
+  },
+  {
+    "id": "SYN-005",
+    "report": "Synthetic SQL injection report for /products?id=. Steps to reproduce: use a controlled test fixture and a benign malformed parameter. Expected: a consistent validation response. Observed: the query behavior changes and a database syntax error is returned. Request: GET /products?id=TEST. Response: redacted database error; parameterized query review recommended.",
+    "expected_category": "sqli",
+    "expected_evidence_quality": "actionable"
+  },
+  {
+    "id": "SYN-006",
+    "report": "Possible SQL injection: the product filter sometimes returns an error when a quote is entered. Endpoint: /catalog. No repeatable response pair or evidence of query manipulation is attached.",
+    "expected_category": "sqli",
+    "expected_evidence_quality": "partial"
+  },
+  {
+    "id": "SYN-007",
+    "report": "I think the site has sqli. No affected endpoint, input field, observed database behavior, or reproduction details were supplied.",
+    "expected_category": "sqli",
+    "expected_evidence_quality": "insufficient"
+  },
+  {
+    "id": "SYN-008",
+    "report": "Synthetic report: SQL injection suspected in a local search filter. Steps to reproduce: repeat the documented harmless test input against a seeded local database. Expected: validation error without changing query structure. Observed: the application's query handling differs from the baseline. Request and redacted response are attached.",
+    "expected_category": "sqli",
+    "expected_evidence_quality": "actionable"
+  },
+  {
+    "id": "SYN-009",
+    "report": "Synthetic server-side request forgery (SSRF) report on an authorized URL-preview feature. Steps to reproduce: point the feature at a controlled callback server. Expected: only allowlisted destinations are fetched. Observed: the server makes a request to the tester-controlled host. Request: POST /preview. Response: callback log and redacted response included.",
+    "expected_category": "ssrf",
+    "expected_evidence_quality": "actionable"
+  },
+  {
+    "id": "SYN-010",
+    "report": "A URL preview endpoint may have SSRF because it accepts arbitrary URLs. Endpoint: /preview. No server-side callback evidence or redirect behavior is documented.",
+    "expected_category": "ssrf",
+    "expected_evidence_quality": "partial"
+  },
+  {
+    "id": "SYN-011",
+    "report": "Could be SSRF, not sure. No service, endpoint, or server-side request evidence is described.",
+    "expected_category": "ssrf",
+    "expected_evidence_quality": "insufficient"
+  },
+  {
+    "id": "SYN-012",
+    "report": "Synthetic SSRF finding in an internal test service: Steps to reproduce: request a URL hosted on a controlled test domain from /fetch. Expected: request is blocked unless the domain is approved. Observed: the server performs the request. A sanitized request and callback record are available.",
+    "expected_category": "ssrf",
+    "expected_evidence_quality": "actionable"
+  },
+  {
+    "id": "SYN-013",
+    "report": "Synthetic IDOR / broken access control report. Two authorized test accounts were created. Steps to reproduce: account A requests its own fixture record, then changes the test record identifier to account B's synthetic fixture. Expected: 403. Observed: the server returns the other fixture record. Request and response are redacted.",
+    "expected_category": "broken_access_control",
+    "expected_evidence_quality": "actionable"
+  },
+  {
+    "id": "SYN-014",
+    "report": "A report says changing an ID might expose another user's invoice. Endpoint: /invoice/{id}. The screenshot is provided, but no second authorized test account or server response is documented.",
+    "expected_category": "broken_access_control",
+    "expected_evidence_quality": "partial"
+  },
+  {
+    "id": "SYN-015",
+    "report": "Access control is broken somewhere in the app, but no affected resource, account context, or reproduction information is included.",
+    "expected_category": "broken_access_control",
+    "expected_evidence_quality": "insufficient"
+  },
+  {
+    "id": "SYN-016",
+    "report": "Synthetic authorization bypass report for /api/projects/{id}. Steps to reproduce: use two test users with separate project fixtures and request the second user's fixture while authenticated as the first. Expected: forbidden. Observed: the response contains the fixture. Request and response are sanitized.",
+    "expected_category": "broken_access_control",
+    "expected_evidence_quality": "actionable"
+  },
+  {
+    "id": "SYN-017",
+    "report": "Synthetic authentication/session management finding. In a local test environment, a session remains valid after the documented logout action. Expected: server-side session invalidation. Observed: the same test token still accesses the fixture endpoint. Steps to reproduce and redacted responses are included.",
+    "expected_category": "authentication_session",
+    "expected_evidence_quality": "actionable"
+  },
+  {
+    "id": "SYN-018",
+    "report": "The login flow may have an authentication bypass, but the report gives only a short video and does not describe the account state or repeatable steps.",
+    "expected_category": "authentication_session",
+    "expected_evidence_quality": "partial"
+  },
+  {
+    "id": "SYN-019",
+    "report": "Maybe a session issue. No token lifecycle, login behavior, or reproducible result is described.",
+    "expected_category": "authentication_session",
+    "expected_evidence_quality": "insufficient"
+  },
+  {
+    "id": "SYN-020",
+    "report": "Synthetic session fixation report in a local app. Steps to reproduce: record a test session identifier before login, authenticate using a dummy account, and check whether the identifier is rotated. Expected: session rotation. Observed: the identifier appears unchanged. Redacted logs included.",
+    "expected_category": "authentication_session",
+    "expected_evidence_quality": "actionable"
+  },
+  {
+    "id": "SYN-021",
+    "report": "Synthetic sensitive data exposure report. A test endpoint returns a fixture containing a fake email and dummy phone number to a role that should not access it. Steps to reproduce, expected policy, observed JSON fields, and a redacted response are documented.",
+    "expected_category": "sensitive_data_exposure",
+    "expected_evidence_quality": "actionable"
+  },
+  {
+    "id": "SYN-022",
+    "report": "The report suggests personal data is exposed in an API response. Endpoint: /api/profile. It includes a screenshot but does not specify which role should have access or provide a sanitized response.",
+    "expected_category": "sensitive_data_exposure",
+    "expected_evidence_quality": "partial"
+  },
+  {
+    "id": "SYN-023",
+    "report": "There is a data leak, according to the reporter. No data type, endpoint, access conditions, or evidence is included.",
+    "expected_category": "sensitive_data_exposure",
+    "expected_evidence_quality": "insufficient"
+  },
+  {
+    "id": "SYN-024",
+    "report": "Synthetic confidential-data exposure finding in a staging fixture. Steps to reproduce: query a test endpoint with a low-privilege account. Expected: only the account's own dummy record. Observed: the JSON response includes an extra synthetic field. Response is sanitized and contains no real personal data.",
+    "expected_category": "sensitive_data_exposure",
+    "expected_evidence_quality": "actionable"
+  },
+  {
+    "id": "SYN-025",
+    "report": "Synthetic insecure configuration finding: debug mode enabled on a staging-only test service. Endpoint: /debug/status. Steps to reproduce: access the endpoint with a test account. Expected: the endpoint is disabled or admin-restricted. Observed: diagnostic configuration is returned. A redacted response is attached.",
+    "expected_category": "insecure_configuration",
+    "expected_evidence_quality": "actionable"
+  },
+  {
+    "id": "SYN-026",
+    "report": "Directory listing appears enabled on a static path. Endpoint: /assets/. The report has a screenshot but does not show whether the files are sensitive or whether this behavior is intended.",
+    "expected_category": "insecure_configuration",
+    "expected_evidence_quality": "partial"
+  },
+  {
+    "id": "SYN-027",
+    "report": "The server configuration is weak, but no setting, service, or observable behavior is identified.",
+    "expected_category": "insecure_configuration",
+    "expected_evidence_quality": "insufficient"
+  },
+  {
+    "id": "SYN-028",
+    "report": "Synthetic misconfiguration report for a local demo service with default credentials. Steps to reproduce: log into the isolated test instance with documented default test credentials. Expected: defaults are disabled. Observed: access is granted. No real system or account is involved.",
+    "expected_category": "insecure_configuration",
+    "expected_evidence_quality": "actionable"
+  },
+  {
+    "id": "SYN-029",
+    "report": "Synthetic security report: an upload validation issue allows an oversized benign text file to consume excessive resources in a local test harness. Steps to reproduce, resource limits, expected behavior, and observed measurements are documented. Category may require specialist review.",
+    "expected_category": "other",
+    "expected_evidence_quality": "actionable"
+  },
+  {
+    "id": "SYN-030",
+    "report": "A report describes a possible race condition in a cart workflow. Endpoint: /cart/checkout. Timing notes are attached, but the result is inconsistent and the impact is not clearly established.",
+    "expected_category": "other",
+    "expected_evidence_quality": "partial"
+  },
+  {
+    "id": "SYN-031",
+    "report": "Something might be wrong with the app's security. No vulnerability category, technical details, or affected behavior is described.",
+    "expected_category": "other",
+    "expected_evidence_quality": "insufficient"
+  },
+  {
+    "id": "SYN-032",
+    "report": "Synthetic report of a business-logic issue in a sandbox checkout. Steps to reproduce with fake cart items, expected versus observed balances, and redacted responses are included. The finding does not clearly fit the predefined categories.",
+    "expected_category": "other",
+    "expected_evidence_quality": "actionable"
+  },
+  {
+    "id": "SYN-033",
+    "report": "This website is hackable. Please fix everything.",
+    "expected_category": "insufficient_evidence",
+    "expected_evidence_quality": "insufficient"
+  },
+  {
+    "id": "SYN-034",
+    "report": "I think there may be a security bug. No affected endpoint, steps, or observations are supplied.",
+    "expected_category": "insufficient_evidence",
+    "expected_evidence_quality": "insufficient"
+  },
+  {
+    "id": "SYN-035",
+    "report": "Possible security problem on the account page; the reporter says an error message appeared once, but provides no request, response, or reproducible steps.",
+    "expected_category": "insufficient_evidence",
+    "expected_evidence_quality": "partial"
+  },
+  {
+    "id": "SYN-036",
+    "report": "A vague report says data might be exposed, without naming the data, endpoint, access conditions, or observed result.",
+    "expected_category": "insufficient_evidence",
+    "expected_evidence_quality": "insufficient"
+  }
+]

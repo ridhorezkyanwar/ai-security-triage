@@ -1,0 +1,79 @@
+from fastapi.testclient import TestClient
+
+from triage.web import app
+
+client = TestClient(app)
+
+
+def test_health_does_not_expose_api_key(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "test-secret-do-not-return")
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
+    assert response.json()["groq_key_configured"] is True
+    assert "test-secret-do-not-return" not in response.text
+
+
+def test_homepage_renders_groq_mode():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "AI Security Triage Agent" in response.text
+    assert "Groq cloud AI" in response.text
+    assert "Ollama local AI" not in response.text
+    assert "Jev API" not in response.text
+
+
+def test_demo_api_works_without_api_key(monkeypatch):
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    response = client.post("/api/triage", json={
+        "mode": "demo",
+        "report": "Synthetic cross-site scripting report. Endpoint: /search. No confirmed proof yet.",
+    })
+    assert response.status_code == 200
+    data = response.json()
+    assert data["mode"] == "demo"
+    assert data["category"] == "xss"
+    assert data["manual_review_required"] is True
+
+
+def test_groq_mode_fails_clearly_without_key(monkeypatch):
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    response = client.post("/api/triage", json={
+        "mode": "groq",
+        "report": "Synthetic report text that is long enough for input validation.",
+    })
+    assert response.status_code == 400
+    assert "GROQ_API_KEY" in response.json()["detail"]
+
+
+def test_groq_api_error_is_returned_as_safe_502(monkeypatch):
+    from triage.groq_client import GroqAPIError
+
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+
+    def fail_classify(self, report):
+        raise GroqAPIError("Groq rate limit or quota reached (HTTP 429).")
+
+    monkeypatch.setattr("triage.groq_client.GroqClient.classify", fail_classify)
+    response = client.post("/api/triage", json={
+        "mode": "groq",
+        "report": "Synthetic report text that is long enough for input validation.",
+    })
+    assert response.status_code == 502
+    assert "429" in response.json()["detail"]
+
+
+def test_too_short_report_is_rejected():
+    response = client.post("/api/triage", json={"mode": "demo", "report": "tiny"})
+    assert response.status_code == 422
+
+
+def test_optional_basic_auth_protects_ui_when_configured(monkeypatch):
+    monkeypatch.setenv("APP_ACCESS_USERNAME", "analyst")
+    monkeypatch.setenv("APP_ACCESS_PASSWORD", "test-password")
+    assert client.get("/").status_code == 401
+    response = client.get("/", auth=("analyst", "test-password"))
+    assert response.status_code == 200
+    assert client.get("/health").status_code == 200
+    monkeypatch.delenv("APP_ACCESS_PASSWORD", raising=False)
+    monkeypatch.delenv("APP_ACCESS_USERNAME", raising=False)

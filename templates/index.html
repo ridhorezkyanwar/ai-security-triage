@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101720">
+  <meta name="description" content="A cautious triage assistant for security reports, with optional Groq API integration.">
+  <title>AI Security Triage Agent</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="AI Security Triage home">
+      <span class="brand-mark" aria-hidden="true">ST</span>
+      <span>SECURITY <strong>TRIAGE</strong></span>
+    </a>
+    <span class="status-chip"><span class="status-dot"></span> Review-first workflow</span>
+  </header>
+
+  <main class="layout">
+    <section class="hero">
+      <p class="eyebrow">AI-ASSISTED SECURITY WORKFLOW</p>
+      <h1>Turn security reports into <span>structured triage.</span></h1>
+      <p class="hero-copy">Classify a report, assess the completeness of its evidence, and route uncertain cases to a human reviewer. This tool does not verify or exploit vulnerabilities.</p>
+      <div class="hero-tags">
+        <span>Python</span><span>FastAPI</span><span>Groq-hosted AI</span><span>Offline demo</span><span>Human review</span>
+      </div>
+    </section>
+
+    <section class="workspace" aria-labelledby="input-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">01 / INPUT</p>
+          <h2 id="input-title">Security report</h2>
+        </div>
+        <button id="sample-button" class="button button-quiet" type="button">Load sample</button>
+      </div>
+
+      <div class="field-group">
+        <label for="mode">Analysis mode</label>
+        <select id="mode" name="mode">
+          <option value="demo">Rule-based demo — offline, not AI</option>
+          <option value="groq">Groq cloud AI — requires Groq API key</option>
+        </select>
+        <p class="field-help" id="mode-help">Demo mode uses local keyword rules. It is not an AI prediction and sends no report to a third party.</p>
+      </div>
+
+      <div class="field-group">
+        <div class="label-row">
+          <label for="report">Report text</label>
+          <span id="char-count" class="counter">0 / {{ max_report_chars }}</span>
+        </div>
+        <textarea id="report" name="report" minlength="20" maxlength="{{ max_report_chars }}" rows="10" placeholder="Paste a sanitized report with the affected component, steps, expected behavior, observed behavior, and impact. Remove secrets and personal data." required></textarea>
+      </div>
+
+      <div class="privacy-note">
+        <span class="note-icon" aria-hidden="true">!</span>
+        <p><strong>Data handling:</strong> Groq mode sends report text to Groq's hosted API from the backend. The API key never goes to the browser. Use synthetic or redacted reports only; do not paste credentials, personal data, private source code, or confidential program details. The offline demo does not send reports anywhere.</p>
+      </div>
+
+      <div class="actions-row">
+        <button id="analyze-button" class="button button-primary" type="button"><span id="button-label">Analyze report</span><span aria-hidden="true">↗</span></button>
+        <span class="shortcut-note">Results are recommendations, not proof.</span>
+      </div>
+      <p id="error-message" class="error-message" role="alert" hidden></p>
+    </section>
+
+    <section class="results" aria-live="polite" aria-labelledby="result-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">02 / OUTPUT</p>
+          <h2 id="result-title">Triage result</h2>
+        </div>
+        <span id="result-mode" class="result-badge">Waiting for input</span>
+      </div>
+
+      <div id="empty-state" class="empty-state">
+        <div class="empty-symbol" aria-hidden="true">⌁</div>
+        <h3>No report analyzed yet</h3>
+        <p>Load the sample report or add a sanitized report above, then run the analysis.</p>
+      </div>
+
+      <div id="result-content" hidden>
+        <div id="review-banner" class="review-banner">
+          <span class="review-icon" aria-hidden="true">!</span>
+          <div><strong id="decision-title">Manual review required</strong><p id="decision-copy"></p></div>
+        </div>
+
+        <div class="result-grid">
+          <article class="result-card">
+            <p class="card-label">PRIMARY CATEGORY</p>
+            <h3 id="category-name">—</h3>
+            <p class="card-meta" id="category-confidence">Confidence: not available</p>
+          </article>
+          <article class="result-card">
+            <p class="card-label">EVIDENCE QUALITY</p>
+            <h3 id="evidence-quality">—</h3>
+            <p class="card-meta" id="evidence-confidence">Confidence: not available</p>
+          </article>
+        </div>
+
+        <article class="detail-card" id="probability-card">
+          <div class="card-heading"><h3>Category probabilities</h3><span class="card-meta">Not provided</span></div>
+          <div id="probabilities" class="probability-list"></div>
+          <p id="no-probabilities" class="muted-copy">This project does not invent calibrated confidence scores or probabilities for Groq or demo mode.</p>
+        </article>
+
+        <article class="detail-card" id="model-reasoning-card" hidden>
+          <div class="card-heading"><h3>Model reasoning summary</h3><span class="step-index">02</span></div>
+          <p class="card-label">CATEGORY REASONING</p><p id="category-reasoning" class="recommendation-copy"></p>
+          <p class="card-label">EVIDENCE REASONING</p><p id="evidence-reasoning" class="recommendation-copy"></p>
+        </article>
+
+        <article class="detail-card">
+          <div class="card-heading"><h3>Recommended next step</h3><span class="step-index">03</span></div>
+          <p id="recommendation" class="recommendation-copy"></p>
+        </article>
+
+        <article class="detail-card" id="reasons-card">
+          <div class="card-heading"><h3>Why review may be needed</h3><span class="step-index">04</span></div>
+          <ul id="review-reasons" class="reason-list"></ul>
+        </article>
+
+        <div class="result-footer">
+          <div><span class="card-label">MODEL</span><p id="model-name">—</p></div>
+          <div><span class="card-label">TOKEN USAGE</span><p id="token-usage">0 input · 0 output</p></div>
+        </div>
+        <p id="demo-note" class="demo-note" hidden></p>
+        <p id="notice" class="notice-copy"></p>
+      </div>
+    </section>
+
+    <section class="methodology">
+      <p class="eyebrow">SAFETY BY DESIGN</p>
+      <div class="method-grid">
+        <div><span class="method-number">01</span><h3>Classify</h3><p>Choose one best-fit category from a controlled taxonomy.</p></div>
+        <div><span class="method-number">02</span><h3>Assess evidence</h3><p>Estimate whether the report contains actionable technical detail.</p></div>
+        <div><span class="method-number">03</span><h3>Route for review</h3><p>Low confidence or incomplete evidence leads to human review, never automatic closure.</p></div>
+      </div>
+    </section>
+    <footer><span>AI Security Triage Agent</span><span>Prototype · Authorized security work only</span></footer>
+  </main>
+
+  <script>
+    const reportInput = document.getElementById('report');
+    const modeInput = document.getElementById('mode');
+    const charCount = document.getElementById('char-count');
+    const maxChars = Number(reportInput.maxLength);
+    const sample = `Title: Reflected cross-site scripting in search page\nAffected component: /search?q=...\nSteps to reproduce:\n1. In an authorized test environment, submit a harmless marker through the search parameter.\n2. Observe the response and confirm whether the value is encoded as text or interpreted as active HTML/script.\nExpected: User-controlled input is safely encoded in the response.\nObserved: The report author says the value appears unencoded in the HTML response.\nEvidence note: This sample is synthetic and does not prove a real vulnerability.`;
+
+    function updateCounter() {
+      charCount.textContent = `${reportInput.value.length.toLocaleString()} / ${maxChars.toLocaleString()}`;
+    }
+    reportInput.addEventListener('input', updateCounter);
+    document.getElementById('sample-button').addEventListener('click', () => {
+      reportInput.value = sample;
+      updateCounter();
+      document.getElementById('error-message').hidden = true;
+    });
+
+    modeInput.addEventListener('change', () => {
+      const help = document.getElementById('mode-help');
+      const helpText = {
+        demo: 'Demo mode uses local keyword rules. It is not an AI prediction and sends no report to a third party.',
+        groq: 'Groq mode sends the sanitized report to Groq’s hosted API. Add GROQ_API_KEY to the backend .env file. Free-tier availability, model access, and request limits depend on the current Groq account and policy.'
+      };
+      help.textContent = helpText[modeInput.value] || helpText.demo;
+    });
+
+    function addText(parent, tag, value, className) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      node.textContent = value == null ? '' : String(value);
+      parent.appendChild(node);
+      return node;
+    }
+
+    function renderProbabilities(probabilities) {
+      const list = document.getElementById('probabilities');
+      list.replaceChildren();
+      const entries = Object.entries(probabilities || {}).sort((a, b) => b[1] - a[1]);
+      document.getElementById('no-probabilities').hidden = entries.length > 0;
+      list.hidden = entries.length === 0;
+      for (const [name, value] of entries) {
+        const row = document.createElement('div');
+        row.className = 'probability-row';
+        const heading = document.createElement('div');
+        heading.className = 'probability-heading';
+        addText(heading, 'span', name.replaceAll('_', ' '));
+        addText(heading, 'span', `${(Number(value) * 100).toFixed(1)}%`);
+        const track = document.createElement('div');
+        track.className = 'probability-track';
+        const fill = document.createElement('div');
+        fill.className = 'probability-fill';
+        fill.style.width = `${Math.max(0, Math.min(100, Number(value) * 100))}%`;
+        track.appendChild(fill);
+        row.append(heading, track);
+        list.appendChild(row);
+      }
+    }
+
+    function percent(value) {
+      return typeof value === 'number' && Number.isFinite(value)
+        ? `Confidence: ${(value * 100).toFixed(1)}%`
+        : 'Confidence: not available';
+    }
+
+    function renderResult(data) {
+      document.getElementById('empty-state').hidden = true;
+      document.getElementById('result-content').hidden = false;
+      document.getElementById('result-mode').textContent = ({ groq: 'Groq cloud AI', demo: 'Rule-based demo' })[data.mode] || data.mode;
+      document.getElementById('review-banner').classList.toggle('review-banner-ok', !data.manual_review_required);
+      document.getElementById('decision-title').textContent = data.manual_review_required ? 'Manual review required' : 'Triage candidate — reviewer confirmation still required';
+      document.getElementById('decision-copy').textContent = data.manual_review_required
+        ? 'One or more review conditions were triggered. Check the reasons below before drawing a conclusion.'
+        : 'Configured thresholds were met. This is not a vulnerability confirmation; a human should validate the evidence.';
+      document.getElementById('category-name').textContent = data.category_label;
+      document.getElementById('category-confidence').textContent = percent(data.category_confidence);
+      document.getElementById('evidence-quality').textContent = data.evidence_quality_label;
+      document.getElementById('evidence-confidence').textContent = percent(data.evidence_confidence);
+      document.getElementById('recommendation').textContent = data.recommendation;
+      document.getElementById('model-name').textContent = data.model;
+      document.getElementById('token-usage').textContent = `${data.usage.input_tokens} input · ${data.usage.output_tokens} output`;
+      document.getElementById('notice').textContent = data.notice;
+      document.getElementById('demo-note').hidden = !data.demo_note;
+      document.getElementById('demo-note').textContent = data.demo_note || '';
+      const reasoningCard = document.getElementById('model-reasoning-card');
+      reasoningCard.hidden = !(data.category_reasoning || data.evidence_reasoning);
+      document.getElementById('category-reasoning').textContent = data.category_reasoning || 'Not provided.';
+      document.getElementById('evidence-reasoning').textContent = data.evidence_reasoning || 'Not provided.';
+      renderProbabilities(data.category_probabilities);
+      const reasons = document.getElementById('review-reasons');
+      reasons.replaceChildren();
+      if (data.review_reasons.length === 0) {
+        addText(reasons, 'li', 'No configured review trigger was met. Human validation is still required.');
+      } else {
+        data.review_reasons.forEach(reason => addText(reasons, 'li', reason));
+      }
+    }
+
+    document.getElementById('analyze-button').addEventListener('click', async () => {
+      const error = document.getElementById('error-message');
+      const button = document.getElementById('analyze-button');
+      const label = document.getElementById('button-label');
+      error.hidden = true;
+      if (reportInput.value.trim().length < 20) {
+        error.textContent = 'Enter at least 20 characters of sanitized report text.';
+        error.hidden = false;
+        return;
+      }
+      button.disabled = true;
+      label.textContent = 'Analyzing…';
+      try {
+        const response = await fetch('/api/triage', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ report: reportInput.value, mode: modeInput.value })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || `Request failed (${response.status})`);
+        renderResult(data);
+      } catch (err) {
+        error.textContent = err instanceof Error ? err.message : 'An unexpected error occurred.';
+        error.hidden = false;
+      } finally {
+        button.disabled = false;
+        label.textContent = 'Analyze report';
+      }
+    });
+    updateCounter();
+  </script>
+</body>
+</html>
