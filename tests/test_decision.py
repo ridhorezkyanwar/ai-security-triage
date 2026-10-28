@@ -29,3 +29,23 @@ def test_high_confidence_still_does_not_claim_vulnerability_is_proven():
     assert result["manual_review_required"] is False
     assert "not proof" in result["notice"]
     assert "proof" not in result["decision"]
+
+
+def test_missing_confidence_is_not_misreported_as_below_threshold():
+    result = build_triage_result({
+        "model": "openai/gpt-oss-120b",
+        "category": "insufficient_evidence",
+        "category_confidence": None,
+        "category_probabilities": {},
+        "evidence_quality": "insufficient",
+        "evidence_confidence": None,
+        "usage": {"input_tokens": 824, "output_tokens": 343},
+    }, mode="groq")
+
+    assert result["manual_review_required"] is True
+    assert result["decision"] == "manual_review_required"
+    assert result["category_confidence"] is None
+    assert result["evidence_confidence"] is None
+    assert any("Category confidence was not provided" in reason for reason in result["review_reasons"])
+    assert any("Evidence-quality confidence was not provided" in reason for reason in result["review_reasons"])
+    assert not any("is below the configured threshold" in reason for reason in result["review_reasons"])
