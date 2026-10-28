@@ -62,7 +62,9 @@ def create_app() -> FastAPI:
         ),
     )
     templates = Jinja2Templates(directory=str(TEMPLATE_DIR))
-    if STATIC_DIR.exists():
+    # Vercel serves files in public/ via its CDN. Keep the Starlette mount for
+    # local development; avoid relying on dynamic StaticFiles discovery at build time.
+    if STATIC_DIR.exists() and not os.getenv("VERCEL"):
         app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
     @app.middleware("http")

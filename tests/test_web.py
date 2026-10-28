@@ -1,4 +1,6 @@
 import pytest
+from pathlib import Path
+
 from fastapi.testclient import TestClient
 
 from triage.web import app
@@ -10,6 +12,7 @@ client = TestClient(app)
 def default_local_test_environment(monkeypatch):
     # Tests opt into local mode unless a specific test checks the hosted secure default.
     monkeypatch.setenv("REQUIRE_AUTH", "false")
+    monkeypatch.delenv("VERCEL", raising=False)
 
 
 def test_health_does_not_expose_api_key(monkeypatch):
@@ -19,6 +22,18 @@ def test_health_does_not_expose_api_key(monkeypatch):
     assert response.json()["status"] == "ok"
     assert response.json()["groq_key_configured"] is True
     assert "test-secret-do-not-return" not in response.text
+
+
+def test_public_stylesheet_is_packaged_for_vercel_cdn():
+    css = Path(__file__).resolve().parents[1] / "public" / "static" / "styles.css"
+    assert css.is_file()
+    assert ".topbar" in css.read_text(encoding="utf-8")
+
+
+def test_local_static_route_serves_stylesheet():
+    response = client.get("/static/styles.css")
+    assert response.status_code == 200
+    assert ".topbar" in response.text
 
 
 def test_homepage_renders_groq_mode():
