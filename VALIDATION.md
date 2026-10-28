@@ -12,7 +12,7 @@ Run from the repository root:
 python -m pytest
 ```
 
-The test suite uses mocked HTTP responses to verify request shape, output validation, rate-limit/auth error handling, key secrecy in API responses, offline demo behavior, and optional HTTP Basic protection. The tests do not prove that the current Groq service, account, model access, or deployment will work live.
+The test suite uses mocked HTTP responses to verify request shape, output validation, rate-limit/auth error handling, key secrecy in API responses, offline demo behavior, optional HTTP Basic protection, and fail-closed behavior when hosted authentication is required but its password is missing. The tests do not prove that the current Groq service, account, model access, or deployment will work live.
 
 ## Live validation still required by the user
 

@@ -71,8 +71,14 @@ def create_app() -> FastAPI:
         if request.url.path == "/health":
             return await call_next(request)
 
-        configured_password = os.getenv("APP_ACCESS_PASSWORD", "")
+        require_auth = os.getenv("REQUIRE_AUTH", "false").strip().lower() in {"1", "true", "yes", "on"}
+        configured_password = os.getenv("APP_ACCESS_PASSWORD", "").strip()
         if not configured_password:
+            if require_auth:
+                return PlainTextResponse(
+                    "Application access is locked because APP_ACCESS_PASSWORD is not configured.",
+                    status_code=503,
+                )
             return await call_next(request)
 
         username = os.getenv("APP_ACCESS_USERNAME", "analyst")

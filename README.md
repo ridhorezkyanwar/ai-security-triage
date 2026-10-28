@@ -101,7 +101,7 @@ To evaluate all bundled cases, run `python scripts/evaluate.py --live` only when
 
 ## 8. Deployment
 
-A `Dockerfile` and `render.yaml` blueprint are included. For hosted deployment, configure `GROQ_API_KEY` as a secret environment variable, set a strong unique `APP_ACCESS_PASSWORD`, and keep access restricted. Never bake keys into the image or repository. `/health` intentionally discloses only service health and whether the Groq key is configured.
+A `Dockerfile` and `render.yaml` blueprint are included. Hosted templates set `REQUIRE_AUTH=true`; configure a strong, unique `APP_ACCESS_PASSWORD` and store `GROQ_API_KEY` only as a server-side secret. If authentication is required but the password is missing, all non-health routes fail closed with HTTP 503 rather than exposing the Groq-backed endpoint. The Docker image defaults to requiring authentication. Local development remains convenient because `run-windows.bat` and the documented Uvicorn command bind to localhost; `.env.example` sets `REQUIRE_AUTH=false` for that local-only use. Never bake keys into the image or repository. `/health` remains public for hosting health checks and reports whether a Groq key is configured, so do not treat it as a secret-bearing endpoint.
 
 The shared HTTP Basic password is a light single-user gate, not multi-user authentication, and this app does not yet have persistent per-user rate limits. Do not expose a publicly accessible instance with an active API key until access protection and usage controls have been reviewed. Hosting free tiers, sleep behavior, build quotas, and provider terms may change; check the current provider dashboard. This project has **not** been deployed by this ZIP-generation task.
 

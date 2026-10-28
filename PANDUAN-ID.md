@@ -69,9 +69,23 @@ python scripts/evaluate.py --live --limit 5
 
 Perintah ini melakukan permintaan live dan memakai kuota Groq. Untuk semua kasus, hapus `--limit 5` hanya setelah kamu memeriksa batas akunmu. Tambahkan `--delay 2` untuk memberi jeda antarpermintaan. Hasil JSON/CSV dibuat di folder `reports/`. Jangan mengklaim akurasi sebelum benar-benar menjalankan evaluasi.
 
-## 8. Status teknis
+## 8. Deployment yang aman
+
+Untuk deployment publik, gunakan secret environment berikut di dashboard hosting:
+
+```dotenv
+REQUIRE_AUTH=true
+APP_ACCESS_USERNAME=analyst
+APP_ACCESS_PASSWORD=GANTI_DENGAN_PASSWORD_PANJANG_UNIK
+GROQ_API_KEY=ISI_DI_SECRET_HOSTING
+```
+
+Jangan commit password atau API key. Blueprint Render dan Dockerfile proyek ini mengaktifkan autentikasi secara default. Jika `REQUIRE_AUTH=true` tetapi password belum diisi, halaman dan API utama akan menolak akses dengan HTTP 503; endpoint `/health` tetap tersedia untuk pemeriksaan hosting. Jangan menonaktifkan autentikasi pada instance yang dapat diakses publik.
+
+## 9. Status teknis
 
 - UI dan backend disiapkan untuk Groq.
 - Tes otomatis memakai mock, bukan panggilan API live.
 - Koneksi Groq baru dapat diverifikasi setelah kamu menambahkan API key dan menjalankan permintaan nyata.
-- Konfigurasi Docker dan Render tersedia, tetapi proyek ini belum dideploy ke internet.
+- Konfigurasi Docker dan Render tersedia; Docker dan Render mewajibkan autentikasi pada konfigurasi deployment yang disediakan.
+- Proyek ini belum dideploy ke internet oleh perubahan ini.

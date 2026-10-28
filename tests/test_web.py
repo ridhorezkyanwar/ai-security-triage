@@ -68,6 +68,20 @@ def test_too_short_report_is_rejected():
     assert response.status_code == 422
 
 
+def test_required_auth_fails_closed_if_password_missing(monkeypatch):
+    monkeypatch.setenv("REQUIRE_AUTH", "true")
+    monkeypatch.delenv("APP_ACCESS_PASSWORD", raising=False)
+
+    # Health checks remain reachable for hosting platforms, but app/API routes stay locked.
+    assert client.get("/health").status_code == 200
+    assert client.get("/").status_code == 503
+    response = client.post("/api/triage", json={
+        "mode": "demo",
+        "report": "Synthetic report content long enough to pass request validation.",
+    })
+    assert response.status_code == 503
+
+
 def test_optional_basic_auth_protects_ui_when_configured(monkeypatch):
     monkeypatch.setenv("APP_ACCESS_USERNAME", "analyst")
     monkeypatch.setenv("APP_ACCESS_PASSWORD", "test-password")
