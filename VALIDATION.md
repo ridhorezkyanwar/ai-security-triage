@@ -2,7 +2,7 @@
 
 ## Scope
 
-Validation performed on the generated project files locally. No real Groq API request was sent, no key was used, and no hosting deployment was performed.
+Validation includes local/CI tests and deployment metadata. No real Groq API request was sent, and no Groq key was used. The Vercel project `ai-security-triage` is linked to this repository; deployment `dpl_9ooJHhRx1PQv9CKSu8mDUZNwXVRd` reached `READY` for commit `9b7a76658066fc52bf67425d1d148ae4d0834d40`. The latest runtime-error summary reported no errors in the selected one-hour window. A direct authenticated HTTP smoke test was not completed, and `GROQ_API_KEY` is not configured.
 
 ## Automated checks
 
@@ -16,12 +16,13 @@ The test suite uses mocked HTTP responses to verify request shape, output valida
 
 ## Live validation still required by the user
 
-1. Confirm Vercel is using the Hobby plan and the intended repository/production branch.
-2. Set `REQUIRE_AUTH=true`, a strong unique `APP_ACCESS_PASSWORD`, and `APP_ACCESS_USERNAME` in the deployment environment.
-3. Create a Groq API key in the console if available under the user's account plan and store it as a deployment secret.
-4. Confirm the configured `GROQ_MODEL` is listed by the account, using `/api/models` or Groq's model documentation.
-5. Run a single synthetic sample in Groq mode.
-6. If live testing succeeds, optionally run a five-case synthetic benchmark and save actual results. Check rate limits before running more.
+1. Test `/health` from a browser or HTTP client.
+2. Confirm the root route prompts for HTTP Basic authentication and use the configured app credentials.
+3. Test Demo mode using a synthetic report.
+4. Add your own Groq API key as a sensitive Vercel environment variable only if the account allows the intended free use; redeploy.
+5. Confirm `/api/models` lists the selected model and run one synthetic report in Groq mode.
+6. Optionally run a five-case synthetic benchmark only after checking rate limits.
+7. Enable GitHub branch protection manually in [Settings → Rules](https://github.com/ridhorezkyanwar/ai-security-triage/settings/rules): require PRs and the `pytest` status check, and block force pushes/deletions.
 
 ## Limitations
 
