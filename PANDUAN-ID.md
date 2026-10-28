@@ -98,8 +98,10 @@ Masukkan password dan API key langsung pada dashboard Vercel sebagai secret, buk
 
 ## 10. Status teknis
 
-- UI dan backend disiapkan untuk Groq.
-- Tes otomatis memakai mock, bukan panggilan API live.
-- Koneksi Groq baru dapat diverifikasi setelah kamu menambahkan API key dan menjalankan permintaan nyata.
-- Konfigurasi Docker dan Render tersedia; proyek juga memiliki panduan deployment Vercel.
-- Koneksi Groq live membutuhkan API key milik pengguna dan tidak termasuk dalam deployment ini.
+- Aplikasi sudah dideploy ke Vercel: https://ai-security-triage.vercel.app
+- Deployment Vercel berstatus READY untuk build yang diperiksa. Ringkasan error runtime tidak menemukan error pada jendela satu jam yang diperiksa; ini bukan pengganti pengujian HTTP menyeluruh.
+- Akses aplikasi memakai HTTP Basic Auth dengan username `analyst`. Password disimpan sebagai environment variable sensitif di Vercel dan diberikan melalui percakapan kepada pemilik; jangan masukkan ke GitHub.
+- `GROQ_API_KEY` belum ditambahkan. Mode demo dapat dicoba setelah login, tetapi mode Groq belum aktif.
+- Tes GitHub Actions untuk commit pengamanan berhasil. Tes itu tidak membuktikan koneksi Groq live.
+- Branch protection untuk `main` belum aktif. Buka [GitHub Settings → Rules](https://github.com/ridhorezkyanwar/ai-security-triage/settings/rules), buat ruleset untuk `main`, wajibkan pull request dan status check `pytest`, lalu blokir force push serta penghapusan branch.
+- Render meminta informasi pembayaran (HTTP 402); tidak ada kartu atau paket berbayar yang ditambahkan.
