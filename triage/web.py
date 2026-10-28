@@ -122,6 +122,7 @@ def create_app() -> FastAPI:
             "status": "ok",
             "service": "ai-security-triage",
             "groq_key_configured": bool(os.getenv("GROQ_API_KEY", "").strip()),
+            "template_ready": (TEMPLATE_DIR / "index.html").is_file(),
         }
 
     @app.get("/api/models")

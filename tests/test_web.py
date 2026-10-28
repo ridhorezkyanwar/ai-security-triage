@@ -21,7 +21,16 @@ def test_health_does_not_expose_api_key(monkeypatch):
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
     assert response.json()["groq_key_configured"] is True
+    assert response.json()["template_ready"] is True
     assert "test-secret-do-not-return" not in response.text
+
+
+def test_vercel_config_includes_templates_in_function_bundle():
+    import json
+
+    config = Path(__file__).resolve().parents[1] / "vercel.json"
+    data = json.loads(config.read_text(encoding="utf-8"))
+    assert data["functions"]["app.py"]["includeFiles"] == "templates/**"
 
 
 def test_public_stylesheet_is_packaged_for_vercel_cdn():
